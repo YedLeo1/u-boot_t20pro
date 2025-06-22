@@ -45,7 +45,7 @@ jobs:
           libncurses5-dev zlib1g-dev pngcrush schedtool libxml2 libxml2-utils \
           xsltproc lzop libc6-dev schedtool g++-multilib lib32z1-dev lib32ncurses5-dev \
           lib32readline-dev gcc-multilib libswitch-perl libssl-dev unzip zip device-tree-compiler \
-          liblz4-tool python-pyelftools python3-pyelftools -y 
+          liblz4-tool -y 
         
         # 设置Python2为默认版本
         sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1

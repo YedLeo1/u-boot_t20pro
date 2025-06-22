@@ -28,6 +28,8 @@ jobs:
       run: |
         ls
         pwd
+        cd ..
+        pwd
         cd u-boot_t20pro
 
     - name: Install Python2 and dependencies

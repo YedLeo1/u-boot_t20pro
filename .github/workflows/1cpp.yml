@@ -38,19 +38,26 @@ jobs:
           flex \
           libssl-dev \
           libssl1.1 \
-          xxd
+          xxd \
+          wget \
+          xz-utils
         
         sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
         sudo update-alternatives --set python /usr/bin/python2
 
-    - name: Clone Firefly prebuilts
+    - name: Download and setup toolchain
       run: |
+        # 创建预构建目录结构
         mkdir -p prebuilts/gcc/linux-x86/aarch64
-        git clone --depth 1 https://gitlab.com/firefly-linux/prebuilts.git prebuilts/gcc/linux-x86/aarch64/prebuilts
+        cd prebuilts/gcc/linux-x86/aarch64
         
-        # 创建符号链接到预期位置
-        ln -s $(pwd)/prebuilts/gcc/linux-x86/aarch64/prebuilts/gcc/linux-x86/aarch64/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu \
-              prebuilts/gcc/linux-x86/aarch64/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu
+        # 直接从 Linaro 下载工具链
+        wget https://releases.linaro.org/components/toolchain/binaries/6.3-2017.05/aarch64-linux-gnu/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz
+        tar xf gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz
+        rm gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz
+        
+        # 返回到工作目录根
+        cd ../../../..
 
     - name: Add toolchain to PATH
       run: |

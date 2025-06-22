@@ -41,7 +41,8 @@ jobs:
           libssl1.1 \
           xxd \
           wget \
-          xz-utils
+          xz-utils \
+          tree
         
         sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
         sudo update-alternatives --set python /usr/bin/python2
@@ -71,7 +72,7 @@ jobs:
         # 设置工具链环境变量
         export CROSS_COMPILE=aarch64-linux-gnu-
         export ARCH=arm64
-        
+        tree prebuilts
         # 执行编译
         ./make.sh rk3588
 

@@ -757,7 +757,7 @@ static AvbSlotVerifyResult load_and_verify_vbmeta(
     case AVB_VBMETA_VERIFY_RESULT_SIGNATURE_MISMATCH:
       ret = AVB_SLOT_VERIFY_RESULT_ERROR_VERIFICATION;
       avb_errorv(full_partition_name,
-                 ": Error verifying vbmeta image: ",
+                 ": Error verifying vbmeta image，114514981980: ",
                  avb_vbmeta_verify_result_to_string(vbmeta_ret),
                  "\n",
                  NULL);

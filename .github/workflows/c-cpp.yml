@@ -8,32 +8,41 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    container: ubuntu:22.04
+    runs-on: ubuntu-22.04
 
     steps:
-    - name: Checkout code
+    - name: Checkout code with Git (fix submodules)
       uses: actions/checkout@v4
-      with:
-        submodules: 'recursive'
+
+    - name: Initialize and update submodules
+      run: |
+        git submodule sync --recursive
+        git submodule update --init --recursive
 
     - name: Clone rkbin
       run: |
         git clone --depth 1 https://github.com/rockchip-linux/rkbin.git
 
-    - name: Install dependencies
+    - name: Install Python2 and dependencies
       run: |
-        apt-get update
-        apt-get install -y \
+        sudo apt-get update
+        # 安装Python2和必要组件
+        sudo apt-get install -y \
+          python2 \
+          python-is-python2 \
+          python2-dev \
+          swig \
           make \
           gcc \
           gcc-aarch64-linux-gnu \
           device-tree-compiler \
           bison \
           flex \
-          libssl-dev \
-          swig \
-          python2
+          libssl-dev
+        
+        # 设置Python2为默认版本
+        sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
+        sudo update-alternatives --set python /usr/bin/python2
 
     - name: Build U-Boot
       run: |
@@ -46,3 +55,5 @@ jobs:
         name: u-boot-images
         path: |
           uboot/*.img
+          uboot/*.bin
+          uboot/*.itb

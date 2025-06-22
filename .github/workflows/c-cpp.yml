@@ -1,10 +1,4 @@
-name: RK U-Boot Build
-
-on:
-  push:
-    branches: [ "next-dev" ]
-  pull_request:
-    branches: [ "next-dev" ]
+name: RK U-Boot Bui
 
 jobs:
   build:

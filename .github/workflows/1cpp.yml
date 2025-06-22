@@ -33,34 +33,28 @@ jobs:
           swig \
           make \
           gcc \
-          gcc-aarch64-linux-gnu \
           device-tree-compiler \
           bison \
           flex \
           libssl-dev \
-          libssl1.1
+          libssl1.1 \
+          xxd
         
         sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
         sudo update-alternatives --set python /usr/bin/python2
 
-    - name: Install specific toolchain version
+    - name: Clone Firefly prebuilts
       run: |
-        # 下载并安装 Rockchip 指定的工具链版本
-        sudo mkdir -p /opt/gcc
-        cd /opt/gcc
-        sudo wget https://releases.linaro.org/components/toolchain/binaries/6.3-2017.05/aarch64-linux-gnu/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz
-        sudo tar xf gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz
-        sudo rm gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz
-        
-        # 创建必要的符号链接
-        sudo ln -s /opt/gcc/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-6.3.1
-        sudo ln -s /opt/gcc/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-objcopy /usr/bin/aarch64-linux-gnu-objcopy-6.3.1
-
-    - name: Create expected prebuilts structure
-      run: |
-        # 创建脚本期望的目录结构
         mkdir -p prebuilts/gcc/linux-x86/aarch64
-        ln -s /opt/gcc/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu prebuilts/gcc/linux-x86/aarch64/
+        git clone --depth 1 https://gitlab.com/firefly-linux/prebuilts.git prebuilts/gcc/linux-x86/aarch64/prebuilts
+        
+        # 创建符号链接到预期位置
+        ln -s $(pwd)/prebuilts/gcc/linux-x86/aarch64/prebuilts/gcc/linux-x86/aarch64/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu \
+              prebuilts/gcc/linux-x86/aarch64/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu
+
+    - name: Add toolchain to PATH
+      run: |
+        echo "$(pwd)/prebuilts/gcc/linux-x86/aarch64/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin" >> $GITHUB_PATH
 
     - name: Build U-Boot
       run: |
@@ -69,9 +63,6 @@ jobs:
         # 设置工具链环境变量
         export CROSS_COMPILE=aarch64-linux-gnu-
         export ARCH=arm64
-        
-        # 创建缺失的.config文件
-        make rk3588_defconfig
         
         # 执行编译
         ./make.sh rk3588
@@ -84,3 +75,4 @@ jobs:
           uboot/*.img
           uboot/*.bin
           uboot/*.itb
+        if-no-files-found: error

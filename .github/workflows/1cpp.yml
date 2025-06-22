@@ -1,0 +1,80 @@
+name: RK U-Boot Build1
+
+on:
+  push:
+    branches: [ "next-dev" ]
+  pull_request:
+    branches: [ "next-dev" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 获取完整历史用于子模块
+    
+    - name: Initialize and update submodules
+      run: |
+        git submodule sync --recursive
+        git submodule update --init --recursive
+
+    - name: Clone rkbin
+      run: |
+        cd ..
+        git clone --depth 1 https://github.com/rockchip-linux/rkbin.git
+
+    - name: Install Python2 and dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          python2 \
+          python-is-python2 \
+          python2-dev \
+          swig \
+          make \
+          gcc \
+          gcc-aarch64-linux-gnu \
+          device-tree-compiler \
+          bison \
+          flex \
+          libssl-dev \
+          libssl1.1  # 兼容旧版OpenSSL
+        
+        # 设置Python2为默认
+        sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
+        sudo update-alternatives --set python /usr/bin/python2
+
+    - name: Setup toolchain symlinks
+      run: |
+        # 创建所需目录结构
+        sudo mkdir -p /opt/gcc
+        sudo ln -s /usr/bin /opt/gcc/aarch64-linux-gnu
+        
+        # 为工具链创建必要的符号链接
+        sudo ln -s /usr/bin/aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-6.3.1
+        sudo ln -s /usr/bin/aarch64-linux-gnu-objcopy /usr/bin/aarch64-linux-gnu-objcopy-6.3.1
+
+    - name: Build U-Boot
+      run: |
+        
+        # 设置工具链环境变量
+        export CROSS_COMPILE=aarch64-linux-gnu-
+        export ARCH=arm64
+        
+        # 创建缺失的.config文件
+        make rk3588_defconfig
+        
+        # 执行编译
+        ./make.sh rk3588
+
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: u-boot-images
+        path: |
+          uboot/*.img
+          uboot/*.bin
+          uboot/*.itb

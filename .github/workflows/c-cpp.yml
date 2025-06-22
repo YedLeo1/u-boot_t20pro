@@ -1,0 +1,48 @@
+name: RK U-Boot Build
+
+on:
+  push:
+    branches: [ "next-dev" ]
+  pull_request:
+    branches: [ "next-dev" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: ubuntu:22.04
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+
+    - name: Clone rkbin
+      run: |
+        git clone --depth 1 https://github.com/rockchip-linux/rkbin.git
+
+    - name: Install dependencies
+      run: |
+        apt-get update
+        apt-get install -y \
+          make \
+          gcc \
+          gcc-aarch64-linux-gnu \
+          device-tree-compiler \
+          bison \
+          flex \
+          libssl-dev \
+          swig \
+          python2
+
+    - name: Build U-Boot
+      run: |
+        cd uboot
+        ./make.sh rk3588
+
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: u-boot-images
+        path: |
+          uboot/*.img

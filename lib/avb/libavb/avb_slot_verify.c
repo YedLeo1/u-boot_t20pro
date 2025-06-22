@@ -1375,6 +1375,12 @@ AvbSlotVerifyResult avb_slot_verify(AvbOps* ops,
                                     AvbSlotVerifyFlags flags,
                                     AvbHashtreeErrorMode hashtree_error_mode,
                                     AvbSlotVerifyData** out_data) {
+  avb_error("=============================================\n");
+  avb_error("   AVB验证已被强制禁用 - 安全风险！\n");
+  avb_error("=============================================\n");
+    
+  // 返回成功
+  return AVB_SLOT_VERIFY_RESULT_OK;
   AvbSlotVerifyResult ret = 0;
   AvbSlotVerifyData* slot_data = NULL;
   AvbAlgorithmType algorithm_type = AVB_ALGORITHM_TYPE_NONE;

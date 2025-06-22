@@ -50,6 +50,7 @@ jobs:
     - name: Download and setup toolchain
       run: |
         # 创建预构建目录结构
+        cd ..
         ls
         pwd
         mkdir -p prebuilts/gcc/linux-x86/aarch64

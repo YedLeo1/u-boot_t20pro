@@ -44,7 +44,7 @@ jobs:
 
     - name: Build U-Boot
       run: |
-        cd uboot
+        cd u-boot_t20pro
         ./make.sh rk3588
 
     - name: Archive artifacts
@@ -53,5 +53,3 @@ jobs:
         name: u-boot-images
         path: |
           uboot/*.img
-          uboot/*.bin
-          uboot/*.itb

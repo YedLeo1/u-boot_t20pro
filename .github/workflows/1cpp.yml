@@ -75,7 +75,6 @@ jobs:
         # 设置工具链环境变量
         export CROSS_COMPILE=aarch64-linux-gnu-
         export ARCH=arm64
-        tree prebuilts
         # 执行编译
         ./make.sh rk3588
 

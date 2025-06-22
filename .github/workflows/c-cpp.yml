@@ -45,6 +45,7 @@ jobs:
 
     - name: Build U-Boot
       run: |
+        ls
         cd u-boot_t20pro
         ./make.sh rk3588
 

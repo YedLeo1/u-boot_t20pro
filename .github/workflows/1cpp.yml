@@ -1,10 +1,7 @@
 name: RK U-Boot Build
 
 on:
-  push:
-    branches: [ "next-dev" ]
-  pull_request:
-    branches: [ "next-dev" ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -86,4 +83,5 @@ jobs:
         name: u-boot-images
         path: |
           uboot.img
+          rk3588_spl_loader_v1.18.113.bin
         if-no-files-found: error

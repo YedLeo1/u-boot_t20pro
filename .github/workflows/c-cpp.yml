@@ -43,7 +43,7 @@ jobs:
         sudo apt-get install git gnupg flex bison gperf libsdl1.2-dev \
           libesd-java squashfs-tools build-essential zip curl \
           libncurses5-dev zlib1g-dev pngcrush schedtool libxml2 libxml2-utils \
-          xsltproc lzop aarch64-linux-gnu-gcc libc6-dev schedtool g++-multilib lib32z1-dev lib32ncurses5-dev \
+          xsltproc lzop libc6-dev schedtool g++-multilib lib32z1-dev lib32ncurses5-dev \
           lib32readline-dev gcc-multilib libswitch-perl libssl-dev unzip zip device-tree-compiler \
           liblz4-tool -y 
         

@@ -24,6 +24,12 @@ jobs:
         cd ..
         git clone --depth 1 https://github.com/rockchip-linux/rkbin.git
 
+    - name: what
+      run: |
+        ls
+        pwq
+        cd u-boot_t20pro
+
     - name: Install Python2 and dependencies
       run: |
         sudo apt-get update
@@ -46,6 +52,7 @@ jobs:
     - name: Build U-Boot
       run: |
         ls
+        pwq
         cd u-boot_t20pro
         ./make.sh rk3588
 

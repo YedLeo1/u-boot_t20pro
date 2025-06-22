@@ -1,4 +1,4 @@
-name: RK U-Boot Build1
+name: RK U-Boot Build
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # 获取完整历史用于子模块
+        fetch-depth: 0
     
     - name: Initialize and update submodules
       run: |
@@ -23,7 +23,6 @@ jobs:
 
     - name: Clone rkbin
       run: |
-        cd ..
         git clone --depth 1 https://github.com/rockchip-linux/rkbin.git
 
     - name: Install Python2 and dependencies
@@ -39,24 +38,33 @@ jobs:
           bison \
           flex \
           libssl-dev \
-          libssl1.1  # 兼容旧版OpenSSL
+          libssl1.1
         
-        # 设置Python2为默认
         sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
         sudo update-alternatives --set python /usr/bin/python2
 
-    - name: Setup toolchain symlinks
+    - name: Install specific toolchain version
       run: |
-        # 创建所需目录结构
+        # 下载并安装 Rockchip 指定的工具链版本
         sudo mkdir -p /opt/gcc
-        sudo ln -s /usr/bin /opt/gcc/aarch64-linux-gnu
+        cd /opt/gcc
+        sudo wget https://releases.linaro.org/components/toolchain/binaries/6.3-2017.05/aarch64-linux-gnu/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz
+        sudo tar xf gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz
+        sudo rm gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz
         
-        # 为工具链创建必要的符号链接
-        sudo ln -s /usr/bin/aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-6.3.1
-        sudo ln -s /usr/bin/aarch64-linux-gnu-objcopy /usr/bin/aarch64-linux-gnu-objcopy-6.3.1
+        # 创建必要的符号链接
+        sudo ln -s /opt/gcc/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-6.3.1
+        sudo ln -s /opt/gcc/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-objcopy /usr/bin/aarch64-linux-gnu-objcopy-6.3.1
+
+    - name: Create expected prebuilts structure
+      run: |
+        # 创建脚本期望的目录结构
+        mkdir -p prebuilts/gcc/linux-x86/aarch64
+        ln -s /opt/gcc/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu prebuilts/gcc/linux-x86/aarch64/
 
     - name: Build U-Boot
       run: |
+        cd uboot
         
         # 设置工具链环境变量
         export CROSS_COMPILE=aarch64-linux-gnu-

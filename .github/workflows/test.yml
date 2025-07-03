@@ -6,9 +6,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
-
-    # 关键加速点 1：开启缓存
     env:
+      # 修复点 1：使用绝对路径定义工作区变量
+      WORKSPACE: ${{ github.workspace }}
       CCACHE_DIR: ${{ github.workspace }}/.ccache
 
     steps:
@@ -17,7 +17,7 @@ jobs:
       with:
         fetch-depth: 0
     
-    # 关键加速点 2：使用 ccache 缓存编译结果
+    # 修复点 2：使用正确路径设置缓存
     - name: Setup ccache
       uses: actions/cache@v4
       with:
@@ -26,35 +26,34 @@ jobs:
         restore-keys: |
           ccache-${{ runner.os }}-
 
-    # 关键加速点 3：并行执行初始化任务
     - name: Initialize environment
       run: |
-        # 并行初始化子模块和rkbin
+        # 修复点 3：使用绝对路径引用
         git submodule sync --recursive &
         git submodule update --init --recursive &
         
-        # 同时准备rkbin目录
-        mkdir -p ../rkbin
-        git clone --depth 1 https://github.com/rockchip-linux/rkbin.git ../rkbin &
-        wait
+        # 在工作区内创建目录（避免上级路径）
+        mkdir -p "${{ env.WORKSPACE }}/rkbin"
+        git clone --depth 1 https://github.com/rockchip-linux/rkbin.git "${{ env.WORKSPACE }}/rkbin" &
         
-        # 创建工具链目录结构
-        mkdir -p ../prebuilts/gcc/linux-x86/aarch64
+        # 在工作区内创建工具链目录
+        mkdir -p "${{ env.WORKSPACE }}/prebuilts/gcc/linux-x86/aarch64"
+        wait
 
-    # 关键加速点 4：预缓存工具链
+    # 修复点 4：使用绝对路径缓存
     - name: Cache toolchain
+      id: cache-toolchain
       uses: actions/cache@v4
       with:
-        path: ../prebuilts/gcc/linux-x86/aarch64
+        path: ${{ env.WORKSPACE }}/prebuilts/gcc/linux-x86/aarch64
         key: toolchain-${{ runner.os }}-6.3.1
         restore-keys: |
           toolchain-${{ runner.os }}-
 
-    # 关键加速点 5：按需下载工具链（仅当缓存不存在）
     - name: Download toolchain (if needed)
       if: steps.cache-toolchain.outputs.cache-hit != 'true'
       run: |
-        cd ../prebuilts/gcc/linux-x86/aarch64
+        cd "${{ env.WORKSPACE }}/prebuilts/gcc/linux-x86/aarch64"
         wget -q https://releases.linaro.org/components/toolchain/binaries/6.3-2017.05/aarch64-linux-gnu/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz
         tar xf gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz
         rm gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz
@@ -62,7 +61,6 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        # 仅安装必要依赖（移除非必要包）
         sudo apt-get install -y \
           python2 \
           swig \
@@ -75,26 +73,24 @@ jobs:
           xxd \
           wget \
           xz-utils \
-          ccache  # 添加ccache
+          ccache
         
         sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
         sudo update-alternatives --set python /usr/bin/python2
         
-        # 配置ccache
         sudo /usr/sbin/update-ccache-symlinks
         echo "/usr/lib/ccache" >> $GITHUB_PATH
 
     - name: Add toolchain to PATH
       run: |
-        echo "$(pwd)/../prebuilts/gcc/linux-x86/aarch64/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin" >> $GITHUB_PATH
+        # 修复点 5：使用绝对路径引用工具链
+        echo "${{ env.WORKSPACE }}/prebuilts/gcc/linux-x86/aarch64/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin" >> $GITHUB_PATH
 
-    # 关键加速点 6：启用并行编译和ccache
     - name: Build U-Boot
       run: |
         
         ./make.sh rk3588
         
-        # 显示ccache统计信息
         ccache -s
 
     - name: Archive artifacts

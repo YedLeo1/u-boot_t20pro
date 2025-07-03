@@ -9,7 +9,6 @@
 
 #include <configs/rk3588_common.h>
 
-#define CONFIG_BOOTDELAY 5
 #define CONFIG_AUTOBOOT_KEYED
 #define CONFIG_AUTOBOOT_STOP_STR " "
 

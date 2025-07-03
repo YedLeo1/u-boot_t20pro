@@ -349,6 +349,11 @@ __weak void autoboot_command_fail_handle(void) {}
 
 void autoboot_command(const char *s)
 {
+	printf("Initializing USB Gadget CDC ACM...\n");
+        run_command("usb start", 0);
+        run_command("usb_gadget_init", 0);
+        run_command("usb_gadget_acm", 0);
+        printf("Virtual serial ready. Connect to /dev/ttyACM0\n");
 	debug("### main_loop: bootcmd=\"%s\"\n", s ? s : "<UNDEFINED>");
 
 	if (stored_bootdelay != -1 && s && !abortboot(stored_bootdelay)) {

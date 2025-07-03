@@ -1,0 +1,111 @@
+name: RK U-Boot Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    # 关键加速点 1：开启缓存
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    # 关键加速点 2：使用 ccache 缓存编译结果
+    - name: Setup ccache
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.CCACHE_DIR }}
+        key: ccache-${{ runner.os }}-${{ hashFiles('**/Makefile') }}
+        restore-keys: |
+          ccache-${{ runner.os }}-
+
+    # 关键加速点 3：并行执行初始化任务
+    - name: Initialize environment
+      run: |
+        # 并行初始化子模块和rkbin
+        git submodule sync --recursive &
+        git submodule update --init --recursive &
+        
+        # 同时准备rkbin目录
+        mkdir -p ../rkbin
+        git clone --depth 1 https://github.com/rockchip-linux/rkbin.git ../rkbin &
+        wait
+        
+        # 创建工具链目录结构
+        mkdir -p ../prebuilts/gcc/linux-x86/aarch64
+
+    # 关键加速点 4：预缓存工具链
+    - name: Cache toolchain
+      uses: actions/cache@v4
+      with:
+        path: ../prebuilts/gcc/linux-x86/aarch64
+        key: toolchain-${{ runner.os }}-6.3.1
+        restore-keys: |
+          toolchain-${{ runner.os }}-
+
+    # 关键加速点 5：按需下载工具链（仅当缓存不存在）
+    - name: Download toolchain (if needed)
+      if: steps.cache-toolchain.outputs.cache-hit != 'true'
+      run: |
+        cd ../prebuilts/gcc/linux-x86/aarch64
+        wget -q https://releases.linaro.org/components/toolchain/binaries/6.3-2017.05/aarch64-linux-gnu/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz
+        tar xf gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz
+        rm gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu.tar.xz
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        # 仅安装必要依赖（移除非必要包）
+        sudo apt-get install -y \
+          python2 \
+          swig \
+          make \
+          gcc \
+          device-tree-compiler \
+          bison \
+          flex \
+          libssl-dev \
+          xxd \
+          wget \
+          xz-utils \
+          ccache  # 添加ccache
+        
+        sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
+        sudo update-alternatives --set python /usr/bin/python2
+        
+        # 配置ccache
+        sudo /usr/sbin/update-ccache-symlinks
+        echo "/usr/lib/ccache" >> $GITHUB_PATH
+
+    - name: Add toolchain to PATH
+      run: |
+        echo "$(pwd)/../prebuilts/gcc/linux-x86/aarch64/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin" >> $GITHUB_PATH
+
+    # 关键加速点 6：启用并行编译和ccache
+    - name: Build U-Boot
+      run: |
+        export CROSS_COMPILE="ccache aarch64-linux-gnu-"
+        export ARCH=arm64
+        
+        # 启用并行编译（根据CPU核心数）
+        CPU_CORES=$(nproc)
+        ./make.sh rk3588 -j$((CPU_CORES * 2))
+        
+        # 显示ccache统计信息
+        ccache -s
+
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: u-boot-images
+        path: |
+          uboot.img
+          rk3588_spl_loader_v1.18.113.bin
+        if-no-files-found: error

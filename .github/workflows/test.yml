@@ -1,4 +1,4 @@
-name: RK U-Boot Build
+name: test
 
 on:
   workflow_dispatch:

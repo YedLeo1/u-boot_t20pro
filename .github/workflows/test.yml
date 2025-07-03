@@ -91,12 +91,8 @@ jobs:
     # 关键加速点 6：启用并行编译和ccache
     - name: Build U-Boot
       run: |
-        export CROSS_COMPILE="ccache aarch64-linux-gnu-"
-        export ARCH=arm64
         
-        # 启用并行编译（根据CPU核心数）
-        CPU_CORES=$(nproc)
-        ./make.sh rk3588 -j$((CPU_CORES * 2))
+        ./make.sh rk3588
         
         # 显示ccache统计信息
         ccache -s
